@@ -1,11 +1,11 @@
 
 
 def print_name():
-    print("nama")
+    return "nama"
 
 
 def add(a, b):
     return a + b
 
 def print_add(a, b, longe=True):
-    print(a + b, longe)
+    return str(a + b), str(longe)
