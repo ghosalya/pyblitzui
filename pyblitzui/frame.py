@@ -1,15 +1,17 @@
+import sys
 from datetime import datetime
 from tkinter import filedialog
 from tkinter import Tk, Frame, Label, Button, Entry, Menu
 from tkinter.scrolledtext import ScrolledText
-from tkinter.ttk import Notebook
+from tkinter.ttk import Notebook, Separator
 from tkinter.constants import END
 
 from .script_loader import load_script
+from .utils import TextWidgetOutput
 
 
 def get_log_time():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now().strftime("%y-%m-%d %H:%M:%S")
 
 
 class ModuleFrame():
@@ -51,7 +53,6 @@ class ModuleFrame():
     def _build_function_frames(self):
         self.function_frames = []
         for function_spec in self.function_list:
-            print("Generating", function_spec["name"])
             func_frame = FunctionFrame(
                 func=function_spec["function"],
                 name=function_spec.get("name", "<UNKFUNC>"),
@@ -104,13 +105,38 @@ class FunctionFrame():
 
     def _build_output(self):
         index = len(self.args) + 1
+        self.output_separator = Separator(self.frame, orient='horizontal')
+        self.output_separator.grid(row=index, columnspan=3, sticky='ew')
+        index += 1
+        self.output_label = Label(self.frame, text="Output:")
+        self.output_label.grid(row=index, column=0, sticky='w')
+        self.output_clear = Button(self.frame, text="clear")
+        self.output_clear.grid(row=index, column=2, sticky='nsew')
+        self.output_label.grid(row=index, column=0, sticky='w')
+        index += 1
         self.output_text = ScrolledText(self.frame, height=5, width=60)
         self.output_text.configure(state="disabled")
         self.output_text.grid(row=index, columnspan=3, sticky='nsew')
+        self.stdout = TextWidgetOutput(self.output_text)
+        self.output_clear.configure(command=self.stdout.flush)
 
     def _bind_execution(self):
         def execute():
+            self.output_text.configure(state="normal")
+            argstring = ", ".join([
+                list(self.args.keys())[i] + "=" + str(self.arg_frames[i].get())
+                for i in range(len(self.arg_frames))
+            ])
+            self.output_text.insert(
+                END,
+                "<{}> [in]: {}({}) \n".format(
+                    get_log_time(), self.name, argstring
+                )
+            )
+            self.output_text.configure(state="disabled")
+
             try:
+                sys.stdout = self.stdout
                 result = self.func(
                     *[eval(arg.get()) for arg in self.arg_frames]
                 )
@@ -120,7 +146,7 @@ class FunctionFrame():
             self.output_text.configure(state="normal")
             self.output_text.insert(
                 END,
-                "[{}] >> {} \n".format(get_log_time(), result)
+                "<{}> [out]: {} \n".format(get_log_time(), result)
             )
             self.output_text.configure(state="disabled")
 
