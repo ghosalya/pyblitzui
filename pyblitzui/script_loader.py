@@ -13,6 +13,7 @@ def load_script(script_path):
         fn_name for fn_name in dir(module)
         if not fn_name.startswith("_")
         and hasattr(getattr(module, fn_name), '__call__')
+        and hasattr(getattr(module, fn_name), '__code__')
     ]
 
     result = []
