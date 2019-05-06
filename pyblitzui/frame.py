@@ -22,7 +22,7 @@ class ModuleFrame():
             self.filepath = filedialog.askopenfilename(
                 title="Load python script"
             )
-            self.function_list = load_script(self.filepath)
+        self.function_list = load_script(self.filepath)
         if self.frame is not None:
             self.frame.destroy()
         self.frame = Tk()
@@ -104,7 +104,7 @@ class FunctionFrame():
 
     def _build_output(self):
         index = len(self.args) + 1
-        self.output_text = ScrolledText(self.frame, height=5, width=60)
+        self.output_text = ScrolledText(self.frame, height=5, width=600)
         self.output_text.configure(state="disabled")
         self.output_text.grid(row=index, columnspan=3, sticky='nsew')
 
