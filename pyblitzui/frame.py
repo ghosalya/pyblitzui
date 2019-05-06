@@ -24,7 +24,7 @@ class ModuleFrame():
             self.filepath = filedialog.askopenfilename(
                 title="Load python script"
             )
-            self.function_list = load_script(self.filepath)
+        self.function_list = load_script(self.filepath)
         if self.frame is not None:
             self.frame.destroy()
         self.frame = Tk()
