@@ -28,3 +28,4 @@ pyblitzui
     ```
     Other lines e.g. function definition and import statements should be per usual.
 2. `pyblitzui` does not manage environments. This means that the dependency of the selected python scripts should be installed in the same environment as `pyblitzui` for it to run properly.
+3. Inputs in `pyblitzui` are considered a line of python code; hence a string must be quoted, for example. This is a design decision so that one can differentiate e.g. a `4` from a `"4"`

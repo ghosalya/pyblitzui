@@ -1,4 +1,5 @@
 import sys
+import traceback
 from datetime import datetime
 from tkinter import filedialog
 from tkinter import Tk, Frame, Label, Button, Entry, Menu
@@ -20,22 +21,27 @@ class ModuleFrame():
         self.frame = Tk()
     
     def build(self):
+        self._load_script()
+        if self.frame is not None:
+            self.frame.destroy()
+
+        self.frame = Tk()
+        self.frame.title("PyBlitzUI - {}".format(self.filepath))
+        self._build_menu()
+        self._build_globalvar_domain()
+        self._build_function_frames()
+        self._pack_to_grid()
+        return self.frame
+
+    def _load_script(self):
         if self.filepath is None:
             self.filepath = filedialog.askopenfilename(
                 title="Load python script"
             )
-            self.function_list = load_script(self.filepath)
-        if self.frame is not None:
-            self.frame.destroy()
-        self.frame = Tk()
-        self.frame.title("PyBlitzUI - {}".format(self.filepath))
-        self._build_menu()
-        # self.path_label = Label(text=self.filepath)
-        # self.path_label.grid(row=0, sticky='nsew')
-        self.tab_control = Notebook(self.frame)
-        self._build_function_frames()
-        self.tab_control.grid(row=0, sticky='nsew')
-        return self.frame
+        self.script_meta = load_script(self.filepath)
+        self.module = self.script_meta.get("module")
+        self.function_list = self.script_meta.get("functions", [])
+        self.global_vars = self.script_meta.get("globalvars", [])
 
     def _build_menu(self):
         self.menu = Menu(self.frame)
@@ -50,7 +56,20 @@ class ModuleFrame():
         self.filepath = None
         self.build()
 
+    def _build_globalvar_domain(self):
+        self.globalvar_domain = Frame(self.frame)
+        self.globalvar_frames = []
+        for i in range(len(self.global_vars)):
+            globalvar_spec = self.global_vars[i]
+            globalvar_frame = GlobalvarFrame(
+                self.module, globalvar_spec['name'], globalvar_spec['init_value']
+            )
+            globalvar_frame.build(self.globalvar_domain, index=i)
+            self.globalvar_frames.append(globalvar_frame)
+        self.domain_separator = Separator(self.frame, orient='horizontal')
+
     def _build_function_frames(self):
+        self.tab_control = Notebook(self.frame)
         self.function_frames = []
         for function_spec in self.function_list:
             func_frame = FunctionFrame(
@@ -63,6 +82,55 @@ class ModuleFrame():
                 func_frame.frame, text=function_spec["name"]
             )
             self.function_frames.append(func_frame)
+
+    def _pack_to_grid(self):
+        self.globalvar_domain.grid(row=0, sticky='nsew')
+        self.domain_separator.grid(row=1, sticky='ew')
+        self.tab_control.grid(row=2, sticky='nsew')
+
+
+class GlobalvarFrame():
+    def __init__(self, module, name, init_value):
+        self.name = name
+        self.module = module
+        if isinstance(init_value, str):
+            self.init_value = '"{}"'.format(init_value)
+        else:
+            self.init_value = init_value
+        self.current_value = init_value
+
+    def build(self, root, index=0):
+        self.frame = Frame(root)
+        self.frame.grid(row=int(index/2), column=int(index%2), sticky='nsew')
+        self.name_label = Label(self.frame, text=self.name)
+        self.name_label.grid(row=0, column=0, sticky='nsew')
+        self.entry = Entry(self.frame)
+        self.entry.insert(0, str(self.init_value))
+        self.entry.configure(state='disabled')
+        self.entry.grid(row=0, column=1, sticky='nsew')
+        self.button = Button(self.frame, text='Edit', command=self._edit)
+        self.button.grid(row=0, column=2, sticky='nsew')
+        return self.frame
+
+    def _edit(self):
+        self.entry.configure(state='normal')
+        self.button.configure(text='Apply', command=self._apply)
+
+    def _apply(self):
+        if self._change_value():
+            self.entry.configure(state='disabled')
+            self.button.configure(text='Edit', command=self._edit)
+
+    def _change_value(self):
+        try:
+            new_value = eval(self.entry.get())
+            self.current_value = new_value
+            setattr(self.module, self.name, new_value)
+            return True
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            return False
+
 
 
 class FunctionFrame():
@@ -141,6 +209,7 @@ class FunctionFrame():
                     *[eval(arg.get()) for arg in self.arg_frames]
                 )
             except Exception as e:
+                traceback.print_exc(file=self.stdout)
                 result = "ERROR: " + str(e)
 
             self.output_text.configure(state="normal")
