@@ -1,5 +1,6 @@
 import sys
 import traceback
+from importlib import reload
 from datetime import datetime
 from tkinter import filedialog
 from tkinter import Tk, Frame, Label, Button, Entry, Menu
@@ -16,8 +17,16 @@ def get_log_time():
 
 
 class ModuleFrame():
-    def __init__(self, filepath=None):
+    def __init__(self, 
+        filepath=None,
+        output_height=5,
+        output_width=60,
+        clear_on_run=False
+    ):
         self.filepath = filepath
+        self.output_height = output_height
+        self.output_width = output_width
+        self.clear_on_run = clear_on_run
         self.frame = Tk()
     
     def build(self):
@@ -47,6 +56,7 @@ class ModuleFrame():
         self.menu = Menu(self.frame)
         self._file_menu = Menu(self.menu, tearoff=0)
         self._file_menu.add_command(label='Open..', command=self._open_command)
+        self._file_menu.add_command(label='New Window..', command=self._get_new_window)
         self._file_menu.add_separator()
         self._file_menu.add_command(label='Exit', command=self.frame.quit)
         self.menu.add_cascade(label="File", menu=self._file_menu)
@@ -55,6 +65,9 @@ class ModuleFrame():
     def _open_command(self):
         self.filepath = None
         self.build()
+
+    def _get_new_window(self):
+        ModuleFrame().build().mainloop()
 
     def _build_globalvar_domain(self):
         self.globalvar_domain = Frame(self.frame)
@@ -138,6 +151,7 @@ class FunctionFrame():
         self.name = name
         self.func = func
         self.args = args
+        self.doc_offset = 0
     
     def build(self, root):
         self.frame = Frame(root)
@@ -148,18 +162,23 @@ class FunctionFrame():
         return self.frame
         
     def _build_runner(self):
+        if self.func.__doc__:
+            self.docstring_label = Label(self.frame, text='"'+self.func.__doc__.strip()+'"')
+            self.docstring_label.grid(row=0, column=0, columnspan=2, sticky='nsew')
+            self.doc_offset = 1
+
         self.name_label = Label(self.frame, text=self.name)
-        self.name_label.grid(row=0, column=0, sticky='nsew')
+        self.name_label.grid(row=self.doc_offset, column=0, sticky='nsew')
 
         self.run_button = Button(self.frame, text="Run")
-        self.run_button.grid(row=0, column=1, columnspan=2, sticky='nsew')
+        self.run_button.grid(row=self.doc_offset, column=1, columnspan=2, sticky='nsew')
 
     def _build_args(self):
         self.arg_frames = []
         arg_items = list(self.args.items())
         for i in range(len(arg_items)):
             arg_name, arg_type = arg_items[i]
-            arg_frame = self._build_arg_frame(arg_name, arg_type, i + 1)
+            arg_frame = self._build_arg_frame(arg_name, arg_type, i + 1 + self.doc_offset)
             self.arg_frames.append(arg_frame)
 
     def _build_arg_frame(self, arg_name, arg_type, index):
@@ -172,7 +191,7 @@ class FunctionFrame():
         return arg_entry
 
     def _build_output(self):
-        index = len(self.args) + 1
+        index = len(self.args) + 2 + self.doc_offset
         self.output_separator = Separator(self.frame, orient='horizontal')
         self.output_separator.grid(row=index, columnspan=3, sticky='ew')
         index += 1

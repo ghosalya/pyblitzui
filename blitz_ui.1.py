@@ -9,6 +9,9 @@ def new_print_name():
 
 
 def multiply(a, b):
+    '''
+    Multiply 2 numbers.
+    '''
     print("multiplying")
     return a * b
 
