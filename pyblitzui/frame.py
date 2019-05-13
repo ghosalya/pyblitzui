@@ -9,7 +9,7 @@ from tkinter.ttk import Notebook, Separator
 from tkinter.constants import END
 
 from .script_loader import load_script
-from .utils import TextWidgetOutput
+from .utils import TextWidgetOutput, displayed_string
 
 
 def get_log_time():
@@ -89,6 +89,8 @@ class ModuleFrame():
                 func=function_spec["function"],
                 name=function_spec.get("name", "<UNKFUNC>"),
                 args=function_spec.get("args", {}),
+                output_height=self.output_height,
+                output_width=self.output_width,
             )
             func_frame.build(self.tab_control)
             self.tab_control.add(
@@ -118,7 +120,7 @@ class GlobalvarFrame():
         self.name_label = Label(self.frame, text=self.name)
         self.name_label.grid(row=0, column=0, sticky='nsew')
         self.entry = Entry(self.frame)
-        self.entry.insert(0, str(self.init_value))
+        self.entry.insert(0, displayed_string(self.init_value))
         self.entry.configure(state='disabled')
         self.entry.grid(row=0, column=1, sticky='nsew')
         self.button = Button(self.frame, text='Edit', command=self._edit)
@@ -147,10 +149,12 @@ class GlobalvarFrame():
 
 
 class FunctionFrame():
-    def __init__(self, func, name, args={}):
+    def __init__(self, func, name, args={}, output_height=5, output_width=60):
         self.name = name
         self.func = func
         self.args = args
+        self.output_height = output_height
+        self.output_width = output_width
         self.doc_offset = 0
     
     def build(self, root):
@@ -187,7 +191,7 @@ class FunctionFrame():
         arg_entry = Entry(self.frame)
         arg_entry.grid(row=index, column=1, columnspan=3, sticky='nsew')
         if arg_type != "REQUIRED":
-            arg_entry.insert(0, str(arg_type))
+            arg_entry.insert(0, displayed_string(arg_type))
         return arg_entry
 
     def _build_output(self):
@@ -201,7 +205,9 @@ class FunctionFrame():
         self.output_clear.grid(row=index, column=2, sticky='nsew')
         self.output_label.grid(row=index, column=0, sticky='w')
         index += 1
-        self.output_text = ScrolledText(self.frame, height=5, width=60)
+        self.output_text = ScrolledText(
+            self.frame, height=self.output_height, width=self.output_width
+        )
         self.output_text.configure(state="disabled")
         self.output_text.grid(row=index, columnspan=3, sticky='nsew')
         self.stdout = TextWidgetOutput(self.output_text)

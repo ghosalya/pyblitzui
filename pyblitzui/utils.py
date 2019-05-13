@@ -14,3 +14,10 @@ class TextWidgetOutput:
         self.output_widget.configure(state="normal")
         self.output_widget.delete(1.0, END)
         self.output_widget.configure(state="disabled")
+
+
+def displayed_string(value):
+    if isinstance(value, str):
+        return '"{}"'.format(value)
+    else:
+        return str(value)
