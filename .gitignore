@@ -4,3 +4,4 @@
 .direnv
 *.egg-info
 *.pyc
+node_modules
