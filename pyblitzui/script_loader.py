@@ -1,13 +1,17 @@
 import os.path
 import importlib.util
 
+
 def load_script(script_path):
     # loading the file
     module_name = os.path.basename(script_path).strip(".py")
     spec = importlib.util.spec_from_file_location(module_name, script_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    return load_module(module)
 
+
+def load_module(module):
     return {
         "module": module,
         "functions": _load_script_functions(module),
@@ -61,5 +65,5 @@ def _load_script_functions(module):
             "function": func,
             "args": args
         })
-    
+
     return output_functions

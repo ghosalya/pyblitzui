@@ -36,3 +36,11 @@ pyblitzui
 1. npm install && pip install -e .
 2. npm run start && python server.py
 3. visit localhost:3000
+
+
+# Example
+
+Run
+```
+python examples/simple_ui/server.py
+```
