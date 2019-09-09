@@ -11,12 +11,14 @@ class FunctionBar extends React.Component {
             input: {},
             inputHandler: this.getInputHandler(props.args),
             output: null,
+            logs: null,
         }
 
         Object.keys(props.args).forEach((key, index) => {
             this.state.inputHandler[key] = this.state.inputHandler[key].bind(this)
         })
         this.handleSubmit = this.handleSubmit.bind(this)
+        this.refreshLogs = this.refreshLogs.bind(this)
     }
 
     getInputHandler(args) {
@@ -34,6 +36,12 @@ class FunctionBar extends React.Component {
     }
 
     handleSubmit(event) {
+        this.setState({
+            call_id: null,
+            output: null,
+            error: null,
+            logs: null,
+        })
         console.log(this.state.input);
         event.preventDefault()
         fetch("/function/call/" + this.props.name, {
@@ -42,14 +50,38 @@ class FunctionBar extends React.Component {
             body: JSON.stringify(this.state.input),
         }).then(res => res.json())
           .then(res => this.setState({
-              output: res.output
+              error: res.error,
+              call_id: res.call_id,
           }))
+          .then(res =>
+            this.periodicFetch = setInterval(this.refreshLogs, 500)
+          )
+    }
+
+    refreshLogs() {
+        fetch("/function/logs/" + this.state.call_id)
+          .then(res => res.json())
+          .then(res => this.setState({
+              logs: res.logs,
+              output: res.output,
+          }))
+        if (this.state.output != null) {
+            clearInterval(this.periodicFetch)
+        }
+    }
+
+    renderLogs() {
+        if (this.state.logs != null) {
+            return this.state.logs.split('\n').map((item, i) => {
+                return (<p>{item}</p>)
+            })
+        } else {
+            return []
+        }
     }
 
     renderOutput() {
-        if(this.state.output == null) {
-            return (<div className="is-divider" data-content="Output (Empty)"></div>)
-        } else {
+        if(this.state.output != null) {
             return (
                 <div className="section">
                     <div className="is-divider" data-content="Output"></div>
@@ -58,6 +90,29 @@ class FunctionBar extends React.Component {
                     </div>
                 </div>
             )
+        } else if (this.state.error != null) {
+            return (
+                <div className="section">
+                    <div className="is-divider" data-content="ERROR"></div>
+                    <div className="section has-background-danger">
+                        { this.state.error }
+                    </div>
+                </div>
+            )
+        } else if (this.state.call_id != null) {
+            return(
+                <div className="section">
+                    <div className="is-divider" data-content="Running"></div>
+                    <div className="section has-background-white-ter">
+                        <p>Run with call_id: { this.state.call_id }</p>
+                        {/* { this.renderLogs() } */}
+                        <p> {this.state.logs} </p>
+                    </div>
+
+                </div>
+            )
+        } else {
+            return (<div className="is-divider" data-content="Output (Empty)"></div>)
         }
     }
 

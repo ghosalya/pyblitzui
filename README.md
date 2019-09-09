@@ -44,3 +44,11 @@ Run
 ```
 python examples/simple_ui/server.py
 ```
+
+# Routes
+
+* `/`: Go to main panel that list all the functions
+* `/function/list`: Module metadata, which is a list of name & args in JSON format
+* `/function/call/<fn_name>` (POST): given a JSON of args, call the function with those args
+    Returns a call_id that can be used for fetching logs.
+* `/function/logs/<call_id>`: Fetch the current state of logs at the current time.

@@ -19,7 +19,7 @@ class ModuleFrame():
     def __init__(self, filepath=None):
         self.filepath = filepath
         self.frame = Tk()
-    
+
     def build(self):
         self._load_script()
         if self.frame is not None:
@@ -138,7 +138,7 @@ class FunctionFrame():
         self.name = name
         self.func = func
         self.args = args
-    
+
     def build(self, root):
         self.frame = Frame(root)
         self._build_runner()
@@ -146,7 +146,7 @@ class FunctionFrame():
         self._build_output()
         self._bind_execution()
         return self.frame
-        
+
     def _build_runner(self):
         self.name_label = Label(self.frame, text=self.name)
         self.name_label.grid(row=0, column=0, sticky='nsew')
